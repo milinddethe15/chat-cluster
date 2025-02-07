@@ -3,6 +3,7 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: mongodb
+  namespace: chat-cluster
 spec:
   replicas: 1
   selector:
@@ -26,11 +27,14 @@ spec:
           value: root
         - name: MONGO_INITDB_ROOT_PASSWORD
           value: password
+        - name: MONGO_INITDB_DATABASE
+          value: admin
 ---
 apiVersion: v1
 kind: Service
 metadata:
   name: mongodb
+  namespace: chat-cluster
 spec:
   selector:
     app: mongodb

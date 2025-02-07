@@ -3,6 +3,7 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: chat-backend
+  namespace: chat-cluster
 spec:
   replicas: 1
   selector:
@@ -21,7 +22,7 @@ spec:
         - containerPort: 5000
         env:
         - name: MONGO_DB_URI
-          value: mongodb://root:password@mongodb:27017
+          value: mongodb://root:password@mongodb.chat-cluster.svc.cluster.local:27017/chat?authSource=admin
         - name: JWT_SECRET
           value: strongest
         - name: NODE_ENV
@@ -31,6 +32,7 @@ apiVersion: v1
 kind: Service
 metadata:
   name: chat-backend
+  namespace: chat-cluster
 spec:
   selector:
     app: chat-backend

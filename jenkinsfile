@@ -1,0 +1,75 @@
+pipeline {
+    agent any
+    
+    environment {
+        DOCKER_HUB_CREDENTIALS_ID = 'dockerhub-creds'  // Jenkins credentials ID for Docker Hub
+        ARGOCD_CREDENTIALS_ID = 'argocd-token'         // ArgoCD API token stored in Jenkins credentials
+        FRONTEND_IMAGE_NAME = 'milinddethe15/chat-cluster-frontend'
+        BACKEND_IMAGE_NAME = 'milinddethe15/chat-cluster-backend'
+        FRONTEND_DIR = 'frontend'
+        BACKEND_DIR = 'backend'
+        ARGOCD_SERVER = ''  // Update with the correct ArgoCD external IP
+        K8S_NAMESPACE = 'chat-cluster'
+    }
+    
+    stages {
+        stage('Clone Repository') {
+            steps {
+                git url: 'https://github.com/milinddethe15/chat-cluster.git', branch: 'main'
+            }
+        }
+        
+        stage('Build & Push Docker Images') {
+            parallel {
+                stage('Build & Push Frontend') {
+                    steps {
+                        script {
+                            docker.withRegistry('https://index.docker.io/v1/', "${DOCKER_HUB_CREDENTIALS_ID}") {
+                                def frontendImage = docker.build("${FRONTEND_IMAGE_NAME}:latest", "-f ${FRONTEND_DIR}/Dockerfile ${FRONTEND_DIR}")
+                                frontendImage.push('latest')
+                            }
+                        }
+                    }
+                }
+                stage('Build & Push Backend') {
+                    steps {
+                        script {
+                            docker.withRegistry('https://index.docker.io/v1/', "${DOCKER_HUB_CREDENTIALS_ID}") {
+                                def backendImage = docker.build("${BACKEND_IMAGE_NAME}:latest", "-f Dockerfile .")
+                                backendImage.push('latest')
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        
+        stage('Deploy to Kubernetes via ArgoCD') {
+            steps {
+                script {
+                    withCredentials([string(credentialsId: "${ARGOCD_CREDENTIALS_ID}", variable: 'ARGOCD_TOKEN')]) {
+                        sh '''
+                        # Log in to ArgoCD
+                        argocd login $ARGOCD_SERVER --grpc-web --insecure --auth-token $ARGOCD_TOKEN
+                        
+                        # Sync the application
+                        argocd app sync chat-cluster --grpc-web --insecure
+                        
+                        # Wait for sync to complete
+                        argocd app wait chat-cluster --health --sync
+                        '''
+                    }
+                }
+            }
+        }
+    }
+    
+    post {
+        success {
+            echo 'Pipeline completed successfully!'
+        }
+        failure {
+            echo 'Pipeline failed!'
+        }
+    }
+}
