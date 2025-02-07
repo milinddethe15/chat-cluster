@@ -1,0 +1,30 @@
+language: minimal
+
+services:
+  - docker
+
+env:
+  global:
+    - IMAGE_BACKEND=milinddethe15/chat-cluster-backend
+    - IMAGE_FRONTEND=milinddethe15/chat-cluster-frontend
+    - K8S_NAMESPACE=chat-cluster
+
+before_install:
+  - echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_USERNAME" --password-stdin
+
+script:
+  # Build and Push Backend Image
+  - docker build -t $IMAGE_BACKEND:latest .
+  - docker push $IMAGE_BACKEND:latest
+
+  # Build and Push Frontend Image
+  - docker build -t $IMAGE_FRONTEND:latest ./frontend
+  - docker push $IMAGE_FRONTEND:latest
+
+deploy:
+  provider: script
+  script:
+    - chmod +x deploy.sh
+    - ./deploy.sh
+  on:
+    branch: main
