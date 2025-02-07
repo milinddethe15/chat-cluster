@@ -8,9 +8,16 @@ env:
     - IMAGE_BACKEND=milinddethe15/chat-cluster-backend
     - IMAGE_FRONTEND=milinddethe15/chat-cluster-frontend
     - K8S_NAMESPACE=chat-cluster
+    - KUBECTL_VERSION=v1.25.0
 
 before_install:
   - echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_USERNAME" --password-stdin
+
+  # Install kubectl
+  - curl -LO "https://dl.k8s.io/release/$KUBECTL_VERSION/bin/linux/amd64/kubectl"
+  - chmod +x kubectl
+  - sudo mv kubectl /usr/local/bin/
+  - kubectl version --client
 
 script:
   # Build and Push Backend Image
