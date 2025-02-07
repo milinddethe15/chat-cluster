@@ -14,17 +14,13 @@ before_install:
 
 script:
   # Build and Push Backend Image
-  - docker build -t $IMAGE_BACKEND:latest .
+  - docker build -t $IMAGE_BACKEND:latest ./backend
   - docker push $IMAGE_BACKEND:latest
 
   # Build and Push Frontend Image
   - docker build -t $IMAGE_FRONTEND:latest ./frontend
   - docker push $IMAGE_FRONTEND:latest
 
-deploy:
-  provider: script
-  script:
-    - chmod +x deploy.sh
-    - ./deploy.sh
-  on:
-    branch: main
+  # Deploy to Kubernetes
+  - chmod +x deploy.sh
+  - ./deploy.sh
