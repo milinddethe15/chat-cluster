@@ -14,7 +14,7 @@ before_install:
 
 script:
   # Build and Push Backend Image
-  - docker build -t $IMAGE_BACKEND:latest ./backend
+  - docker build -t $IMAGE_BACKEND:latest .
   - docker push $IMAGE_BACKEND:latest
 
   # Build and Push Frontend Image
