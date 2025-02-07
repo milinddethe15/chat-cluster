@@ -2,19 +2,15 @@
 
 set -e
 
-# Check if K8S_NAMESPACE is set, otherwise use "default"
-K8S_NAMESPACE=${K8S_NAMESPACE:-default}
+# Define the namespace
+NAMESPACE=chat-cluster
 
-# Setup Kubeconfig
-echo $KUBE_CONFIG | base64 -d > kubeconfig
-export KUBECONFIG=kubeconfig
+# Create the namespace if it doesn't exist
+kubectl get namespace $NAMESPACE || kubectl create namespace $NAMESPACE
 
 # Apply Kubernetes Manifests
-kubectl apply -f k8s_manifest/
+kubectl apply -f k8s_manifest/ -n $NAMESPACE
 
 # Restart deployments to use new images
-kubectl rollout restart deployment/chat-backend -n $K8S_NAMESPACE
-kubectl rollout restart deployment/chat-frontend -n $K8S_NAMESPACE
-
-# Clean up
-rm kubeconfig
+kubectl rollout restart deployment/chat-backend -n $NAMESPACE
+kubectl rollout restart deployment/chat-frontend -n $NAMESPACE
